@@ -156,15 +156,29 @@ out of git but not off disk. Runtime lookup keeps them out of both.
 required keychain service and, for any that are missing, prints the exact
 `security add-generic-password -s <service> -a <account> -w` command to run.
 
-### Rotation required
+Every lookup is non-fatal by construction. `security find-generic-password`
+returns empty and exits non-zero when the entry is absent, and `2>/dev/null`
+plus the surrounding `export` swallow it. A machine with an empty keychain gets
+empty variables and a working shell, not an error.
 
-The following were found in plaintext on the source machine and were read into
-an assistant session transcript during inventory. All three must be rotated
-before or during this work:
+That makes the **client role's keychain setup empty by default**. It exports no
+Linear or OpenRouter key at all, and `run_onchange_after_40-keychain-check.sh`
+reports nothing to do. `gh auth login` covers git and GitHub credentials on its
+own, so `GITHUB_PERSONAL_ACCESS_TOKEN` only needs a keychain entry if some tool
+reads it directly.
 
-- `LINEAR_API_KEY` (was in `~/.zshenv`)
-- `OPENROUTER_API_KEY` (was in `~/.zshenv`)
-- npm publish token (was in `~/.npmrc`)
+### Credential rotation: declined
+
+`LINEAR_API_KEY` and `OPENROUTER_API_KEY` were plaintext in `~/.zshenv`, and an
+npm publish token was plaintext in `~/.npmrc`. All three were read into an
+assistant session transcript during inventory. Rotation was considered and
+declined; the keys stay as they are.
+
+This does not change the design. The keys cannot live in the repo regardless of
+their rotation state, because the repo is published to GitHub. Keychain lookup
+is what lets a committed `.zshenv` produce a working personal machine. Setup is
+a one-time `security add-generic-password` per key on the personal machine, and
+nothing at all on the client machine.
 
 ## Homebrew
 
@@ -211,6 +225,19 @@ brew "ffmpeg"
 brew "poppler"
 {{ end }}
 ```
+
+The full transitive dependency closure of that list, verified on the source
+machine, is seven small libraries:
+
+```
+ca-certificates  libgit2  libssh2  llhttp  oniguruma  openssl@3  pcre2
+```
+
+No erlang, postgres, node, wxwidgets, or python appears anywhere in it. Applying
+this Brewfile cannot install a language runtime or a database. `brew bundle`
+also never uninstalls: removing an entry has no effect on an already-installed
+formula, and pruning requires an explicit `brew bundle cleanup --force` that no
+script in this repo runs.
 
 `brew leaves` is **not** a valid basis for this list. `ripgrep` is installed on
 the source machine as a transitive dependency and does not appear in `brew
@@ -380,9 +407,11 @@ The design is complete when, on a fresh machine:
 4. `git config user.email` returns the role-appropriate address.
 5. `env | grep -c LINEAR_API_KEY` returns 0 on the client role and 1 on
    personal.
-6. `grep -rE 'lin_api_|sk-or-v1-|npm_[A-Za-z0-9]{36}' ~/projects/dotfiles`
+6. On the client role, `brew list --formula | grep -cE 'erlang|postgresql'`
+   returns 0 after a full `chezmoi apply` on a fresh machine.
+7. `grep -rE 'lin_api_|sk-or-v1-|npm_[A-Za-z0-9]{36}' ~/projects/dotfiles`
    returns nothing.
-7. VS Code opens with Shades of Purple (Super Dark), the material icon theme,
+8. VS Code opens with Shades of Purple (Super Dark), the material icon theme,
    and an integrated terminal rendering Nerd Font glyphs.
 
 ## Open items
