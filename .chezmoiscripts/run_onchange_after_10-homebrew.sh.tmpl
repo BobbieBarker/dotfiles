@@ -15,6 +15,7 @@ if [[ ! -f "$BREWFILE" ]]; then
 fi
 
 echo "==> brew bundle from $BREWFILE"
-# No cleanup flag. brew bundle only adds; it never uninstalls anything already
-# present on the machine.
-brew bundle --file="$BREWFILE" --no-lock
+# 'install' stated explicitly rather than relying on it being the default
+# subcommand. No cleanup: brew bundle only adds, and never uninstalls anything
+# already present on the machine.
+brew bundle install --file="$BREWFILE"
