@@ -1,0 +1,35 @@
+#!/bin/bash
+# Installs oh-my-zsh and the three custom plugins the .zshrc plugin list needs.
+# The other plugins in that list (git, gitfast, colorize, mix, elixir, docker,
+# docker-compose, asdf, brew, fzf) ship with oh-my-zsh itself.
+#
+# plugins hash: autoupdate zsh-autosuggestions zsh-claudecode-completion v1
+
+set -euo pipefail
+
+ZSH_DIR="${ZSH:-$HOME/.oh-my-zsh}"
+ZSH_CUSTOM="${ZSH_CUSTOM:-$ZSH_DIR/custom}"
+
+if [[ ! -d "$ZSH_DIR" ]]; then
+  echo "==> installing oh-my-zsh"
+  # Unattended: does not chsh and does not launch a subshell.
+  RUNZSH=no CHSH=no KEEP_ZSHRC=yes \
+    sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+else
+  echo "==> oh-my-zsh already present"
+fi
+
+clone_plugin() {
+  local name="$1" url="$2" dest="$ZSH_CUSTOM/plugins/$1"
+  if [[ -d "$dest" ]]; then
+    echo "    $name already present"
+  else
+    echo "==> cloning $name"
+    git clone --depth=1 "$url" "$dest"
+  fi
+}
+
+mkdir -p "$ZSH_CUSTOM/plugins"
+clone_plugin autoupdate                 https://github.com/TamCore/autoupdate-oh-my-zsh-plugins
+clone_plugin zsh-autosuggestions        https://github.com/zsh-users/zsh-autosuggestions
+clone_plugin zsh-claudecode-completion  https://github.com/wbingli/zsh-claudecode-completion

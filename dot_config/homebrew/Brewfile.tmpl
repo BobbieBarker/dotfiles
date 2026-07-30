@@ -1,0 +1,35 @@
+# Config dependencies. Every entry here backs an alias or export in .zshrc.
+# Removing one breaks the shell; this list is NOT a package inventory.
+#
+# Derived by walking each alias/export back to the binary it needs, not from
+# `brew leaves`. ripgrep is installed transitively on the source machine and
+# does not appear in `brew leaves`, so a leaves-derived list silently breaks
+# `alias grep='rg'`.
+
+tap "romkatv/powerlevel10k"
+
+brew "eza"                     # alias ls, ll, tree
+brew "bat"                     # alias cat + ~/.config/bat/config
+brew "fd"                      # alias find + FZF_DEFAULT_COMMAND + FZF_ALT_C_COMMAND
+brew "ripgrep"                 # alias grep
+brew "git-delta"               # alias diff, GIT_PAGER, gitconfig core.pager/diffFilter
+brew "zoxide"                  # alias cd
+brew "fzf"                     # omz fzf plugin
+brew "zsh-syntax-highlighting" # sourced by .zshrc
+brew "powerlevel10k"           # prompt, with ~/.p10k.zsh
+brew "jq"
+brew "gh"
+brew "lazygit"
+
+cask "ghostty"
+cask "visual-studio-code"
+cask "font-jetbrains-mono-nerd-font"  # Ghostty + VS Code integrated terminal
+cask "font-fira-code"                 # VS Code editor font
+{{ if eq .role "personal" }}
+# Personal machine only.
+cask "codex"
+brew "flyctl"
+brew "hcloud"
+brew "ffmpeg"
+brew "poppler"
+{{- end }}

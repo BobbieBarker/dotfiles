@@ -1,0 +1,33 @@
+# Language runtimes and their build dependencies.
+#
+# NO SCRIPT IN THIS REPO RUNS THIS FILE. `chezmoi apply` will never install
+# anything listed here. Run it by hand, only if you want it:
+#
+#   brew bundle --file=~/.config/homebrew/Brewfile.runtimes
+#
+# Then install the runtimes themselves:
+#
+#   asdf plugin add erlang && asdf plugin add elixir
+#   asdf plugin add nodejs && asdf plugin add rust && asdf plugin add rebar
+#   asdf install                 # reads .tool-versions in the current directory
+#
+# On a client machine, prefer that project's own .tool-versions over the
+# personal pins carried in this repo.
+
+brew "asdf"
+brew "cmake"
+
+# Erlang build dependencies. wxwidgets and fop are needed for observer and
+# docs; KERL_CONFIGURE_OPTIONS in .zshrc sets --without-javac.
+brew "wxwidgets"
+brew "fop"
+brew "libxslt"
+
+# Postgres and friends.
+brew "postgresql@14"
+brew "libpqxx"
+brew "sqlite"
+
+# Python build dependencies, if pyenv is ever actually used.
+brew "tcl-tk"
+brew "zlib"

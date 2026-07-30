@@ -1,0 +1,9 @@
+# Repo-only files. Never written to the target machine.
+README.md
+docs/**
+.gitignore
+
+{{ if ne .role "personal" }}
+# Personal-only: the client machine does not pin runtimes from this repo.
+.tool-versions
+{{ end }}

@@ -1,0 +1,20 @@
+#!/bin/bash
+# Installs the formulae the shell config depends on.
+#
+# Re-runs only when the Brewfile below changes. The hash comment is what makes
+# run_onchange_ notice.
+# Brewfile hash: {{ include "dot_config/homebrew/Brewfile.tmpl" | sha256sum }}
+
+set -euo pipefail
+
+BREWFILE="${HOME}/.config/homebrew/Brewfile"
+
+if [[ ! -f "$BREWFILE" ]]; then
+  echo "run_onchange_after_10-homebrew: $BREWFILE missing, nothing to do" >&2
+  exit 0
+fi
+
+echo "==> brew bundle from $BREWFILE"
+# No cleanup flag. brew bundle only adds; it never uninstalls anything already
+# present on the machine.
+brew bundle --file="$BREWFILE" --no-lock

@@ -1,0 +1,29 @@
+# Sourced by EVERY zsh invocation, including non-interactive `zsh -c`.
+# Keep this file cheap.
+#
+# Credentials come from the macOS Keychain at runtime, never from this repo.
+# Every lookup is non-fatal: a missing entry yields an empty variable, not an
+# error, so a machine with an empty keychain still gets a working shell.
+#
+# The DOTFILES_SECRETS_LOADED guard is load-bearing. It is exported alongside
+# the values, so child shells inherit both and skip the lookups. Without it,
+# every `zsh -c` would pay a keychain call per secret.
+#
+# To populate an entry:
+#   security add-generic-password -s <service> -a "$USER" -w
+{{ if eq .role "personal" }}
+if [[ -z "${DOTFILES_SECRETS_LOADED:-}" ]]; then
+  export GITHUB_PERSONAL_ACCESS_TOKEN="$(security find-generic-password -s github-pat -w 2>/dev/null)"
+  export NPM_TOKEN="$(security find-generic-password -s npm-token -w 2>/dev/null)"
+  export LINEAR_API_KEY="$(security find-generic-password -s linear-api -w 2>/dev/null)"
+  export OPENROUTER_API_KEY="$(security find-generic-password -s openrouter-api -w 2>/dev/null)"
+  export DOTFILES_SECRETS_LOADED=1
+fi
+{{- else }}
+# Client machine. No personal credentials are exported here.
+# `gh auth login` covers git and GitHub. Add lookups below only if a tool needs
+# an env var directly.
+if [[ -z "${DOTFILES_SECRETS_LOADED:-}" ]]; then
+  export DOTFILES_SECRETS_LOADED=1
+fi
+{{- end }}

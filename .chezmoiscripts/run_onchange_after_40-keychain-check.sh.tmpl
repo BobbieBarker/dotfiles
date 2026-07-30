@@ -1,0 +1,41 @@
+#!/bin/bash
+# Reports which Keychain entries are missing and prints the exact command to
+# create each one. Stores nothing, reads nothing, and never fails the apply.
+#
+# role: {{ .role }}
+
+set -uo pipefail
+
+{{ if eq .role "personal" -}}
+SERVICES=(github-pat npm-token linear-api openrouter-api)
+{{- else -}}
+SERVICES=()
+{{- end }}
+
+if [[ ${#SERVICES[@]} -eq 0 ]]; then
+  echo "==> keychain: nothing required on this machine"
+  exit 0
+fi
+
+missing=()
+for svc in "${SERVICES[@]}"; do
+  if security find-generic-password -s "$svc" -w >/dev/null 2>&1; then
+    echo "    $svc present"
+  else
+    missing+=("$svc")
+  fi
+done
+
+if [[ ${#missing[@]} -gt 0 ]]; then
+  echo
+  echo "==> ${#missing[@]} keychain entr$([[ ${#missing[@]} -eq 1 ]] && echo y || echo ies) missing."
+  echo "    The shell works without them; the matching env vars are just empty."
+  echo "    To populate, run each and paste the value at the prompt:"
+  echo
+  for svc in "${missing[@]}"; do
+    echo "      security add-generic-password -s $svc -a \"\$USER\" -w"
+  done
+  echo
+fi
+
+exit 0

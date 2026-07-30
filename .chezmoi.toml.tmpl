@@ -1,0 +1,10 @@
+{{- $role := promptStringOnce . "role" "Machine role (personal|client)" "personal" -}}
+{{- $gitName := promptStringOnce . "gitName" "Git user.name" -}}
+{{- $gitEmail := promptStringOnce . "gitEmail" "Git user.email" -}}
+
+sourceDir = {{ (printf "%s/projects/dotfiles" .chezmoi.homeDir) | quote }}
+
+[data]
+role     = {{ $role | quote }}
+gitName  = {{ $gitName | quote }}
+gitEmail = {{ $gitEmail | quote }}

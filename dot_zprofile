@@ -1,0 +1,10 @@
+# Login shells only.
+
+eval "$(/opt/homebrew/bin/brew shellenv)"
+
+# python.org framework build, if one is actually installed.
+# Guarded: the source machine carried this unconditionally while pyenv held
+# zero versions, so it pointed at a directory that may not exist.
+if [[ -d "/Library/Frameworks/Python.framework/Versions/3.10/bin" ]]; then
+  export PATH="/Library/Frameworks/Python.framework/Versions/3.10/bin:$PATH"
+fi

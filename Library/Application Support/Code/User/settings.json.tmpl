@@ -1,0 +1,155 @@
+// Base is the Windsurf copy (newer than the local VS Code copy), with VS
+// Code-only keys folded back in and dead keys removed.
+{
+    // --- editor ---
+    "editor.fontFamily": "Fira Code",
+    "editor.fontLigatures": true,
+    "editor.fontSize": 20,
+    "editor.fontWeight": "400",
+    "editor.letterSpacing": 1,
+    "editor.lineHeight": 25,
+    "editor.cursorStyle": "line",
+    "editor.cursorWidth": 3,
+    "editor.tabSize": 2,
+    "editor.multiCursorModifier": "alt",
+    "editor.snippetSuggestions": "top",
+    "editor.glyphMargin": false,
+    "editor.renderWhitespace": "all",
+    "editor.accessibilitySupport": "off",
+
+    // --- workbench ---
+    "workbench.colorTheme": "Shades of Purple (Super Dark)",
+    "workbench.iconTheme": "material-icon-theme",
+    "workbench.editor.enablePreview": false,
+    "workbench.sideBar.location": "right",
+    "workbench.fontAliasing": "auto",
+    "workbench.statusBar.feedback.visible": false,
+    "breadcrumbs.enabled": true,
+
+    // --- terminal ---
+    // Was 'MesloLGM Nerd Font', which is not installed on any machine and was
+    // silently falling back. JetBrainsMono matches the Ghostty config.
+    "terminal.integrated.fontFamily": "'JetBrainsMono Nerd Font'",
+    "terminal.integrated.scrollback": 90000,
+    "terminal.integrated.macOptionIsMeta": true,
+    "terminal.integrated.tabs.enabled": true,
+    "terminal.integrated.enableMultiLinePasteWarning": false,
+    "terminal.integrated.showCommandHint": false,
+    "terminal.integrated.allowedLinkSchemes": [
+        "file",
+        "http",
+        "https",
+        "mailto",
+        "vscode",
+        "vscode-insiders",
+        "docker-desktop"
+    ],
+
+    // --- files ---
+    "files.trimTrailingWhitespace": true,
+    "files.insertFinalNewline": true,
+    "files.associations": {
+        "*.html.eex": "html",
+        "*.html.leex": "html"
+    },
+    "files.watcherExclude": {
+        "**/_build/**": true,
+        "**/.elixir_ls/**": true,
+        "**/deps/**": true
+    },
+
+    // --- languages ---
+    "elixirLS.fetchDeps": false,
+    "typescript.updateImportsOnFileMove.enabled": "always",
+    "javascript.updateImportsOnFileMove.enabled": "always",
+    "npm.enableScriptExplorer": true,
+
+    // --- git ---
+    "diffEditor.ignoreTrimWhitespace": false,
+    "git.openRepositoryInParentFolders": "never",
+    "githubPullRequests.pullBranch": "never",
+    "gitlens.advanced.messages": {
+        "suppressShowKeyBindingsNotice": true
+    },
+    "gitlens.views.scm.grouped.views": {
+        "commits": false,
+        "branches": false,
+        "remotes": false,
+        "stashes": false,
+        "tags": false,
+        "worktrees": false,
+        "contributors": false,
+        "repositories": false,
+        "searchAndCompare": false,
+        "launchpad": false
+    },
+
+    // --- todo-tree ---
+    "todo-tree.highlights.defaultHighlight": {
+        "icon": "alert",
+        "type": "text",
+        "foreground": "red",
+        "background": "white",
+        "opacity": 50,
+        "iconColour": "red",
+        "rulerColour": "magenta"
+    },
+    "todo-tree.highlights.customHighlight": {
+        "TODO": {
+            "icon": "squirrel",
+            "iconColour": "#D11250",
+            "background": "#D11250",
+            "foreground": "#FFFFFF"
+        },
+        "FIXME": {
+            "icon": "bug",
+            "iconColour": "red",
+            "foreground": "#FFFFFF",
+            "background": "#DC3D24",
+            "opacity": 100
+        },
+        "REFACTOR": {
+            "icon": "beaker",
+            "iconColour": "#DB5800",
+            "foreground": "#E1E1E1",
+            "background": "#006899",
+            "opacity": 100
+        },
+        "WIP": {
+            "icon": "tools",
+            "iconColour": "#FFF748",
+            "foreground": "#FFF748",
+            "background": "#3C1A5B",
+            "opacity": 100
+        }
+    },
+    "todo-tree.general.tags": [
+        "TICKET",
+        "FIXME",
+        "REFACTOR",
+        "WIP"
+    ],
+    "todo-tree.general.statusBar": "top three",
+    "todo-tree.tree.showCountsInTree": true,
+    "todo-tree.tree.showScanModeButton": false,
+    "todo-tree.regex.regexCaseSensitive": false,
+    "todo-tree.filtering.excludeGlobs": [
+        "remote-profile",
+        "deps",
+        "assets"
+    ],
+
+    // --- misc ---
+    "explorer.confirmDragAndDrop": false,
+    "extensions.ignoreRecommendations": true,
+    "playwright.reuseBrowser": true,
+    "docker.extension.enableComposeLanguageServer": false,
+    "chat.mcp.gallery.enabled": true,
+
+    // --- claude code ---
+    "claudeCode.preferredLocation": "sidebar",
+    "claudeCode.selectedModel": "default"{{ if eq .role "personal" }},
+    "claudeCode.initialPermissionMode": "bypassPermissions",
+    "claudeCode.allowDangerouslySkipPermissions": true,
+    "github.copilot.chat.claudeAgent.allowDangerouslySkipPermissions": true{{ end }}
+}

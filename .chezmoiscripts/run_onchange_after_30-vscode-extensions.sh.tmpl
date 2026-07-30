@@ -1,0 +1,86 @@
+#!/bin/bash
+# Installs the VS Code extension set.
+#
+# Re-runs only when this list changes.
+# extension count: 59
+
+set -euo pipefail
+
+if ! command -v code >/dev/null 2>&1; then
+  echo "run_onchange_after_30-vscode-extensions: 'code' not on PATH." >&2
+  echo "  Open VS Code and run: Shell Command: Install 'code' command in PATH" >&2
+  exit 0
+fi
+
+EXTENSIONS=(
+  actboy168.lua-debug
+  ahmadawais.shades-of-purple
+  anthropic.claude-code
+  bajdzis.vscode-database
+  christian-kohler.npm-intellisense
+  ckolkman.vscode-postgres
+  codecov.codecov
+  coolbear.systemd-unit-file
+  cssho.vscode-svgviewer
+  david-rickard.git-diff-and-merge-tool
+  dbaeumer.vscode-eslint
+  deerawan.vscode-dash
+  docker.docker
+  dotjoshjohnson.xml
+  dunn.redis
+  eamodio.gitlens
+  editorconfig.editorconfig
+  forbeslindesay.vscode-sql-template-literal
+  formulahendry.auto-close-tag
+  formulahendry.auto-rename-tag
+  github.vscode-github-actions
+  github.vscode-pull-request-github
+  gruntfuggly.todo-tree
+  idleberg.icon-fonts
+  jakebecker.elixir-ls
+  kdcro101.vscode-redis
+  keyring.lua
+  kkalita.dark-plus-elixir
+  leizongmin.node-module-intellisense
+  mads-hartmann.bash-ide-vscode
+  marclipovsky.string-manipulation
+  maty.vscode-mocha-sidebar
+  medo64.render-crlf
+  meera.ppdm-spec
+  mikestead.dotenv
+  mjmcloug.vscode-elixir
+  ms-azuretools.vscode-containers
+  ms-azuretools.vscode-docker
+  ms-ossdata.vscode-pgsql
+  ms-playwright.playwright
+  ms-vscode-remote.remote-containers
+  ms-vsliveshare.vsliveshare
+  pantajoe.vscode-elixir-credo
+  pedromsluz.vscode-phoenix
+  petalframework.vscode-petal-components-snippets
+  peterj.proto
+  pgourlain.erlang
+  phoenixframework.phoenix
+  pkief.material-icon-theme
+  plex.vscode-protolint
+  redhat.vscode-yaml
+  shd101wyy.markdown-preview-enhanced
+  trixnz.vscode-lua
+  vincaslt.highlight-matching-tag
+  waderyan.gitblame
+  youngki.easy-redis
+  yzhang.markdown-all-in-one
+  zerokol.vscode-eex-beautify
+  zignd.html-css-class-completion
+)
+
+installed="$(code --list-extensions 2>/dev/null || true)"
+
+for ext in "${EXTENSIONS[@]}"; do
+  if grep -qix "$ext" <<<"$installed"; then
+    echo "    $ext already installed"
+  else
+    echo "==> installing $ext"
+    code --install-extension "$ext" --force >/dev/null
+  fi
+done

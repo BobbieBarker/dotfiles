@@ -1,0 +1,27 @@
+[user]
+	name = {{ .gitName }}
+	email = {{ .gitEmail }}
+[credential "https://github.com"]
+	helper =
+	helper = !/opt/homebrew/bin/gh auth git-credential
+[credential "https://gist.github.com"]
+	helper =
+	helper = !/opt/homebrew/bin/gh auth git-credential
+[filter "lfs"]
+	clean = git-lfs clean -- %f
+	smudge = git-lfs smudge -- %f
+	process = git-lfs filter-process
+	required = true
+[core]
+	pager = delta
+	excludesfile = {{ .chezmoi.homeDir }}/.config/git/ignore
+[interactive]
+	diffFilter = delta --color-only
+[delta]
+	navigate = true
+	side-by-side = true
+	line-numbers = true
+[merge]
+	conflictstyle = diff3
+[diff]
+	colorMoved = default

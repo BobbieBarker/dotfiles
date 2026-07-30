@@ -1,0 +1,101 @@
+{
+  "env": {
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
+  },
+  "permissions": {
+    "allow": [
+      "Bash",
+      "Edit",
+      "Read",
+      "Write",
+      "Glob",
+      "Grep",
+      "WebFetch",
+      "WebSearch",
+      "Task",
+      "mcp__github__*",
+      "mcp__fetch__*",
+      "mcp__playwright__*"{{ if eq .role "personal" }},
+      "mcp__obsidian__*",
+      "mcp__grafana__*",
+      "mcp__obsidian-work__list_directory",
+      "mcp__obsidian-work__update_frontmatter",
+      "mcp__forge-symphony__health",
+      "mcp__forge-symphony__groom",
+      "mcp__forge-symphony__run_status",
+      "mcp__forge-symphony__artifact_read",
+      "mcp__forge-symphony__gate_approve",
+      "mcp__forge-symphony__list_runs",
+      "mcp__forge-symphony__status",
+      "Read(//private/tmp/symphony-logs/**)",
+      "Edit({{ .chezmoi.homeDir }}/.claude/skills/quiche-http3/**)"{{ end }}
+    ],
+{{- if eq .role "personal" }}
+    "defaultMode": "bypassPermissions",
+{{- else }}
+    "defaultMode": "default",
+{{- end }}
+    "additionalDirectories": [
+      "{{ .chezmoi.homeDir }}/.claude/skills",
+      "{{ .chezmoi.homeDir }}"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Grep|Glob",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/cbm-code-discovery-gate",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "matcher": "startup",
+        "hooks": [
+          { "type": "command", "command": "~/.claude/hooks/cbm-session-reminder" }
+        ]
+      },
+      {
+        "matcher": "resume",
+        "hooks": [
+          { "type": "command", "command": "~/.claude/hooks/cbm-session-reminder" }
+        ]
+      },
+      {
+        "matcher": "clear",
+        "hooks": [
+          { "type": "command", "command": "~/.claude/hooks/cbm-session-reminder" }
+        ]
+      },
+      {
+        "matcher": "compact",
+        "hooks": [
+          { "type": "command", "command": "~/.claude/hooks/cbm-session-reminder" }
+        ]
+      }
+    ]
+  },
+  "enabledPlugins": {
+    "frontend-design@claude-plugins-official": true,
+    "elixir-lsp@claude-code-elixir": true,
+    "superpowers@claude-plugins-official": true
+  },
+  "extraKnownMarketplaces": {
+    "claude-code-elixir": {
+      "source": {
+        "source": "github",
+        "repo": "georgeguimaraes/claude-code-elixir"
+      }
+    }
+  },
+  "effortLevel": "xhigh",
+{{- if eq .role "personal" }}
+  "skipDangerousModePermissionPrompt": true,
+{{- end }}
+  "theme": "custom:kanagawa-wave"
+}

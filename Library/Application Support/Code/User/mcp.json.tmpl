@@ -1,0 +1,30 @@
+{
+    "servers": {
+        "io.github.github/github-mcp-server": {
+            "type": "http",
+            "url": "https://api.githubcopilot.com/mcp/",
+            "gallery": "https://api.mcp.github.com",
+            "version": "0.31.0"
+        },
+        "oraios/serena": {
+            "type": "stdio",
+            "command": "uvx",
+            "args": [
+                "--from",
+                "git+https://github.com/oraios/serena",
+                "serena",
+                "start-mcp-server",
+                "serena@latest",
+                "--context",
+                "ide-assistant"
+            ],
+            "gallery": "https://api.mcp.github.com",
+            "version": "1.0.0"
+        },
+        "codebase-memory-mcp": {
+            "type": "stdio",
+            "command": "{{ .chezmoi.homeDir }}/.local/bin/codebase-memory-mcp"
+        }
+    },
+    "inputs": []
+}

@@ -1,0 +1,18 @@
+font-family = JetBrainsMono Nerd Font
+font-size = 15
+
+theme = Kanagawa Wave
+
+window-padding-x = 12
+window-padding-y = 8
+window-decoration = true
+
+cursor-style = bar
+cursor-style-blink = false
+shell-integration-features = cursor,sudo,title
+
+copy-on-select = clipboard
+confirm-close-surface = false
+
+macos-titlebar-style = tabs
+macos-option-as-alt = true
