@@ -34,8 +34,11 @@ On a fresh machine, after Xcode Command Line Tools and Homebrew:
 
 ```bash
 brew install chezmoi
-chezmoi init --apply --source ~/projects/dotfiles git@github.com:BobbieBarker/dotfiles.git
+chezmoi init --apply --source ~/projects/dotfiles https://github.com/BobbieBarker/dotfiles.git
 ```
+
+HTTPS, not SSH. Key setup happens after this step, so an SSH clone here fails
+with `Permission denied (publickey)`.
 
 chezmoi prompts once for role, git name, and git email; writes all managed
 files; then runs the ordered scripts. Re-running `chezmoi apply` is idempotent.

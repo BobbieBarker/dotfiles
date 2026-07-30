@@ -14,7 +14,15 @@ Install the Xcode Command Line Tools and Homebrew, then:
 
 ```bash
 brew install chezmoi
-chezmoi init --apply --source ~/projects/dotfiles git@github.com:BobbieBarker/dotfiles.git
+chezmoi init --apply --source ~/projects/dotfiles https://github.com/BobbieBarker/dotfiles.git
+```
+
+Use the HTTPS URL, not SSH. SSH keys are set up *after* this step, so an SSH
+clone here fails with `Permission denied (publickey)`. To switch the remote to
+SSH once your key is on GitHub:
+
+```bash
+git -C ~/projects/dotfiles remote set-url origin git@github.com:BobbieBarker/dotfiles.git
 ```
 
 You get three prompts: machine role, git name, git email. Everything else is
