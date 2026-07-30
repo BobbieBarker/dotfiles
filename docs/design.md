@@ -1,7 +1,11 @@
 # Portable dev environment: design
 
 Date: 2026-07-30
-Status: approved design, not yet implemented
+Status: implemented and verified locally. Not yet pushed to GitHub.
+
+Implementation note: `Library/Application Support/Code/User/settings.json`
+became `settings.json.tmpl`, because the three
+`allowDangerouslySkipPermissions` keys are role-gated.
 
 ## Problem
 
