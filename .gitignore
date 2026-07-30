@@ -1,0 +1,4 @@
+# Never commit resolved secrets. All credentials come from macOS Keychain at runtime.
+*.local
+.env
+.DS_Store
