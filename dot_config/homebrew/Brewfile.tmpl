@@ -25,6 +25,15 @@ cask "ghostty"
 cask "visual-studio-code"
 cask "font-jetbrains-mono-nerd-font"  # Ghostty + VS Code integrated terminal
 cask "font-fira-code"                 # VS Code editor font
+{{ if ne .role "personal" }}
+# The ~/.claude config in this repo is inert without the binary.
+#
+# Gated OFF for the personal role on purpose: that machine already has a
+# native install under ~/.local/share/claude/versions, and two concurrent
+# installs conflict. Homebrew installs do not auto-update on their own, so
+# CLAUDE_CODE_PACKAGE_MANAGER_AUTO_UPDATE is set in ~/.claude/settings.json.
+cask "claude-code"
+{{- end }}
 {{ if eq .role "personal" }}
 # Personal machine only.
 cask "codex"

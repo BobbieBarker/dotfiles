@@ -1,6 +1,7 @@
 {
   "env": {
-    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"{{ if ne .role "personal" }},
+    "CLAUDE_CODE_PACKAGE_MANAGER_AUTO_UPDATE": "1"{{ end }}
   },
   "permissions": {
     "allow": [
