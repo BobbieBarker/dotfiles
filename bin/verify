@@ -1,0 +1,178 @@
+#!/bin/bash
+# Verifies that an applied dotfiles environment is actually working.
+#
+# Safe to run repeatedly. Reads only; changes nothing.
+# Exits 0 if every hard check passed, 1 otherwise.
+#
+#   ~/projects/dotfiles/bin/verify
+
+PASS=0; FAIL=0; WARN=0
+
+ok()   { printf "  \033[32mPASS\033[0m  %s\n" "$1"; PASS=$((PASS+1)); }
+bad()  { printf "  \033[31mFAIL\033[0m  %s\n" "$1"; [ -n "${2:-}" ] && printf "        %s\n" "$2"; FAIL=$((FAIL+1)); }
+warn() { printf "  \033[33mWARN\033[0m  %s\n" "$1"; [ -n "${2:-}" ] && printf "        %s\n" "$2"; WARN=$((WARN+1)); }
+head_() { printf "\n\033[1m%s\033[0m\n" "$1"; }
+
+ROLE="$(chezmoi data 2>/dev/null | sed -n 's/.*"role"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | head -1)"
+[ -z "$ROLE" ] && ROLE="unknown"
+
+printf "\033[1mdotfiles verification\033[0m   role=%s   host=%s\n" "$ROLE" "$(hostname -s)"
+
+# --- 1. binaries the aliases depend on ---------------------------------------
+head_ "1. Config dependencies"
+for t in eza bat fd rg delta zoxide fzf jq gh lazygit; do
+  if command -v "$t" >/dev/null 2>&1; then ok "$t"
+  else bad "$t missing" "brew bundle install --file=~/.config/homebrew/Brewfile"; fi
+done
+
+# --- 2. aliases actually resolve in an interactive shell ----------------------
+head_ "2. Aliases resolve (interactive zsh)"
+ALIASES="$(zsh -ic 'alias' 2>/dev/null)"
+if [ -z "$ALIASES" ]; then
+  bad "could not read aliases from an interactive zsh"
+else
+  for pair in "ls=eza" "cat=bat" "grep=rg" "find=fd" "diff=delta" "cd=z" "tree=eza" "ll=eza"; do
+    a="${pair%%=*}"; want="${pair#*=}"
+    if grep -qE "^${a}='?${want}" <<<"$ALIASES"; then ok "$a -> $want"
+    else bad "$a does not resolve to $want"; fi
+  done
+fi
+
+# --- 3. prompt and shell plugins ---------------------------------------------
+head_ "3. Prompt and shell plugins"
+P10K="$(brew --prefix 2>/dev/null)/opt/powerlevel10k/share/powerlevel10k/powerlevel10k.zsh-theme"
+[ -f "$P10K" ] && ok "powerlevel10k installed" || bad "powerlevel10k missing" "$P10K"
+[ -f "$HOME/.p10k.zsh" ] && ok "~/.p10k.zsh present" || bad "~/.p10k.zsh missing"
+ZHL="$(brew --prefix 2>/dev/null)/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
+[ -f "$ZHL" ] && ok "zsh-syntax-highlighting installed" || bad "zsh-syntax-highlighting missing" "$ZHL"
+[ -d "$HOME/.oh-my-zsh" ] && ok "oh-my-zsh installed" || bad "oh-my-zsh missing"
+for p in autoupdate zsh-autosuggestions zsh-claudecode-completion; do
+  [ -d "$HOME/.oh-my-zsh/custom/plugins/$p" ] && ok "omz plugin: $p" || bad "omz plugin missing: $p"
+done
+
+# --- 4. no shell startup noise -----------------------------------------------
+# Targets specific known-bad signatures rather than "any output". p10k's
+# gitstatus prints harmless init errors when the inner shell has no TTY, which
+# would otherwise produce a false failure whenever this runs from a script.
+head_ "4. Clean shell startup"
+NOISE="$(zsh -ic 'true' 2>&1)"
+if grep -qi 'command not found' <<<"$NOISE"; then
+  bad "shell startup hits 'command not found'" "$(grep -i 'command not found' <<<"$NOISE" | head -2 | tr '\n' ' ')"
+else ok "no 'command not found' at startup"; fi
+# Structural, not observational. The doctor warning only fires on a real prompt
+# or chpwd cycle, which `zsh -ic 'true'` never reaches, so watching for the
+# message gives a false pass. Assert the invariant directly instead: nothing may
+# touch PATH after the zoxide init.
+# Anchor on the eval, not on comments that merely mention zoxide.
+ZLINE="$(grep -nE '^[[:space:]]*[^#[:space:]].*zoxide init' "$HOME/.zshrc" 2>/dev/null | head -1 | cut -d: -f1)"
+if [ -z "$ZLINE" ]; then
+  bad "no zoxide init found in ~/.zshrc"
+elif tail -n "+$((ZLINE+1))" "$HOME/.zshrc" | grep -qE '^[^#]*(export +)?PATH='; then
+  bad "PATH is modified after the zoxide init" "line $ZLINE onward in ~/.zshrc; this triggers the zoxide doctor warning"
+else ok "nothing modifies PATH after the zoxide init"; fi
+if grep -qiE 'zshrc: (powerlevel10k|zsh-syntax-highlighting) missing' <<<"$NOISE"; then
+  bad "zshrc reports a missing brew formula" "brew bundle install --file=~/.config/homebrew/Brewfile"
+else ok "no missing-formula warnings from .zshrc"; fi
+
+# --- 5. PATH hygiene ---------------------------------------------------------
+head_ "5. PATH"
+IPATH="$(zsh -ic 'echo $PATH' 2>/dev/null | tail -1)"
+DUPES="$(tr ':' '\n' <<<"$IPATH" | sort | uniq -d | grep -v '^$')"
+[ -z "$DUPES" ] && ok "no duplicate PATH entries" || bad "duplicate PATH entries" "$(tr '\n' ' ' <<<"$DUPES")"
+# Only entries .zshrc is responsible for. macOS cryptexd paths and Claude Code's
+# runtime-injected plugin bins are normal and not ours to police.
+DEAD="$(tr ':' '\n' <<<"$IPATH" | grep -v '^$' \
+  | grep -vE 'cryptexd|/\.claude/plugins/|/opt/homebrew/opt/asdf/libexec' \
+  | while read -r d; do [ -d "$d" ] || echo "$d"; done)"
+[ -z "$DEAD" ] && ok "no dead PATH entries from .zshrc" || warn "dead PATH entries" "$(tr '\n' ' ' <<<"$DEAD")"
+grep -q 'codeium/windsurf' <<<"$IPATH" && bad "Windsurf still on PATH" || ok "no Windsurf on PATH"
+
+# --- 6. git ------------------------------------------------------------------
+head_ "6. Git"
+GN="$(git config --global user.name)"; GE="$(git config --global user.email)"
+[ -n "$GN" ] && ok "user.name = $GN" || bad "git user.name unset"
+[ -n "$GE" ] && ok "user.email = $GE" || bad "git user.email unset"
+[ "$(git config --global core.pager)" = "delta" ] && ok "delta is the git pager" || bad "git pager is not delta"
+gh auth status >/dev/null 2>&1 && ok "gh authenticated" || warn "gh not authenticated" "run: gh auth login"
+
+# --- 7. terminal -------------------------------------------------------------
+head_ "7. Terminal"
+[ -f "$HOME/.config/ghostty/config" ] && ok "ghostty config present" || bad "ghostty config missing"
+[ -d "/Applications/Ghostty.app" ] && ok "Ghostty installed" || bad "Ghostty not installed"
+if ls ~/Library/Fonts /Library/Fonts 2>/dev/null | grep -qi 'JetBrainsMonoNerdFont'; then
+  ok "JetBrainsMono Nerd Font installed"
+else bad "JetBrainsMono Nerd Font missing" "Ghostty and the VS Code terminal both reference it"; fi
+
+# --- 8. VS Code --------------------------------------------------------------
+head_ "8. VS Code"
+if command -v code >/dev/null 2>&1; then
+  ok "code CLI on PATH"
+  N="$(code --list-extensions 2>/dev/null | wc -l | tr -d ' ')"
+  [ "$N" -ge 55 ] && ok "$N extensions installed" || bad "only $N extensions installed (expected ~59)"
+else bad "code CLI not on PATH" "VS Code > Command Palette > Shell Command: Install 'code' command"; fi
+VS="$HOME/Library/Application Support/Code/User/settings.json"
+if [ -f "$VS" ]; then
+  ok "settings.json present"
+  grep -q 'JetBrainsMono Nerd Font' "$VS" && ok "terminal font fixed (not MesloLGM)" || bad "terminal font not corrected"
+  grep -q 'MesloLGM' "$VS" && bad "stale MesloLGM reference still present" || ok "no stale MesloLGM reference"
+else bad "VS Code settings.json missing"; fi
+
+# --- 9. Claude Code ----------------------------------------------------------
+head_ "9. Claude Code"
+if command -v claude >/dev/null 2>&1; then ok "claude installed ($(claude --version 2>/dev/null | head -1))"
+else bad "claude not installed"; fi
+CS="$HOME/.claude/settings.json"
+if [ -f "$CS" ]; then
+  if /usr/bin/python3 -c "import json;json.load(open('$CS'))" 2>/dev/null; then ok "~/.claude/settings.json is valid JSON"
+  else bad "~/.claude/settings.json is malformed"; fi
+  MODE="$(/usr/bin/python3 -c "import json;print(json.load(open('$CS'))['permissions']['defaultMode'])" 2>/dev/null)"
+  if [ "$ROLE" = "client" ] && [ "$MODE" != "default" ]; then
+    bad "defaultMode is '$MODE' on a client machine" "expected 'default'"
+  else ok "defaultMode = $MODE (correct for role=$ROLE)"; fi
+else bad "~/.claude/settings.json missing"; fi
+[ -f "$HOME/.claude/CLAUDE.md" ] && ok "global CLAUDE.md present" || bad "CLAUDE.md missing"
+[ -f "$HOME/.claude/themes/kanagawa-wave.json" ] && ok "kanagawa-wave theme present" || bad "theme missing"
+SK="$(find "$HOME/.claude/skills" -name 'SKILL.md' 2>/dev/null | wc -l | tr -d ' ')"
+[ "$SK" -ge 40 ] && ok "$SK skills installed" || bad "only $SK skills found (expected 44)"
+for h in cbm-code-discovery-gate cbm-session-reminder; do
+  F="$HOME/.claude/hooks/$h"
+  if [ -x "$F" ]; then
+    if grep -qE '/Users/[a-z]+' "$F" && ! grep -q "$HOME" "$F"; then
+      bad "hook $h references a different user's home" "$(grep -oE '/Users/[a-z]+' "$F" | head -1)"
+    elif grep -q "$HOME" "$F"; then ok "hook $h templated to this HOME"
+    else warn "hook $h has no home path" "pre-templating version; run 'chezmoi apply'"; fi
+  else bad "hook $h missing or not executable"; fi
+done
+
+# --- 10. role isolation ------------------------------------------------------
+head_ "10. Role isolation"
+ENVOUT="$(zsh -ic 'env' 2>/dev/null)"
+if [ "$ROLE" = "client" ]; then
+  grep -q '^LINEAR_API_KEY=.' <<<"$ENVOUT" && bad "LINEAR_API_KEY is set on a client machine" || ok "no LINEAR_API_KEY"
+  grep -q '^OPENROUTER_API_KEY=.' <<<"$ENVOUT" && bad "OPENROUTER_API_KEY set on client" || ok "no OPENROUTER_API_KEY"
+  zsh -ic 'alias sj' >/dev/null 2>&1 && bad "forge-symphony alias 'sj' present on client" || ok "no forge-symphony aliases"
+  if brew list --formula 2>/dev/null | grep -qE '^(erlang|postgresql)'; then
+    warn "erlang/postgres installed" "not from this repo; you installed it separately"
+  else ok "no erlang/postgres installed by the bootstrap"; fi
+else
+  ok "role=$ROLE, client-isolation checks skipped"
+fi
+
+# --- 11. chezmoi state -------------------------------------------------------
+head_ "11. chezmoi"
+if command -v chezmoi >/dev/null 2>&1; then
+  ok "chezmoi installed ($(chezmoi --version | head -1 | awk '{print $3}'))"
+  DIFF="$(chezmoi diff 2>/dev/null | head -5)"
+  [ -z "$DIFF" ] && ok "no drift between source and home" || warn "target has drifted from source" "run 'chezmoi diff' to inspect, 'chezmoi re-add' to absorb"
+  DOC="$(chezmoi doctor 2>&1 | grep -E '^(ERROR|WARNING)' | head -3)"
+  [ -z "$DOC" ] && ok "chezmoi doctor clean" || warn "chezmoi doctor findings" "$(tr '\n' ' ' <<<"$DOC")"
+else bad "chezmoi not installed"; fi
+
+# --- summary -----------------------------------------------------------------
+printf "\n\033[1m%s\033[0m\n" "────────────────────────────────────────"
+printf "  \033[32m%d passed\033[0m   \033[31m%d failed\033[0m   \033[33m%d warnings\033[0m\n" "$PASS" "$FAIL" "$WARN"
+if [ "$FAIL" -eq 0 ]; then
+  printf "  \033[32mEnvironment is good.\033[0m\n\n"; exit 0
+else
+  printf "  \033[31mFix the failures above, then re-run.\033[0m\n\n"; exit 1
+fi

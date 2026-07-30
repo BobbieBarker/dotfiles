@@ -7,3 +7,4 @@ docs/**
 # Personal-only: the client machine does not pin runtimes from this repo.
 .tool-versions
 {{ end }}
+bin/**
